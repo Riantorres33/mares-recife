@@ -1,0 +1,6 @@
+{
+  "regions": ["gru1"],
+  "functions": {
+    "api/tides.js": { "maxDuration": 30 }
+  }
+}

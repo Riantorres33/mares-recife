@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Marés Recife</title>
+<style>
+  :root {
+    --bg: #f4f4f2;
+    --surface: #fcfcfb;
+    --ink: #1b1b1a;
+    --ink-2: #545451;
+    --muted: #7a7a76;
+    --line: #e3e3df;
+    --grid: #ececE8;
+    --accent: #2a78d6;
+    --on-accent: #ffffff;
+    --bad: #b3261e;
+    --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121211;
+      --surface: #1a1a19;
+      --ink: #f1f1ee;
+      --ink-2: #bdbdb8;
+      --muted: #8d8d88;
+      --line: #2e2e2c;
+      --grid: #262624;
+      --accent: #3987e5;
+      --on-accent: #0b0b0b;
+      --bad: #f2877f;
+      --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  }
+  main { max-width: 860px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 1.25rem; margin: 4px 0 2px; }
+  .sub { color: var(--ink-2); font-size: .875rem; margin: 0 0 16px; }
+
+  .go {
+    display: block; width: 100%; min-height: 56px; border: 0; border-radius: 14px;
+    background: var(--accent); color: var(--on-accent);
+    font: inherit; font-size: 1.125rem; font-weight: 650; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .go:active { transform: scale(.99); }
+  .go[disabled] { opacity: .65; cursor: progress; }
+
+  .nav { display: grid; grid-template-columns: 48px 1fr 48px; gap: 8px; margin: 12px 0; align-items: center; }
+  .nav button, .nav input, .seg button {
+    min-height: 48px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--surface); color: var(--ink); font: inherit; cursor: pointer;
+  }
+  .nav input { width: 100%; padding: 0 12px; text-align: center; font-weight: 600; }
+  .nav button { font-size: 1.25rem; }
+  .today-link { grid-column: 1 / -1; justify-self: center; background: none; border: 0; color: var(--accent); font: inherit; font-size: .9rem; min-height: 36px; cursor: pointer; }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin-top: 12px; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .seg button[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); font-weight: 650; }
+
+  .chart-wrap { position: relative; height: min(62vh, 420px); min-height: 300px; }
+  canvas { width: 100% !important; }
+
+  .legend { list-style: none; margin: 8px 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; }
+  @media (min-width: 640px) { .legend { grid-template-columns: repeat(3, 1fr); } }
+  .legend button {
+    width: 100%; min-height: 44px; display: flex; align-items: center; gap: 8px; text-align: left;
+    background: none; border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px;
+    color: var(--ink); font: inherit; font-size: .8125rem; cursor: pointer;
+  }
+  .legend button[aria-pressed="false"] { opacity: .45; }
+  .legend .sw { flex: none; width: 22px; height: 0; border-top: 3px solid var(--c); }
+  .legend .sw.dash { border-top-style: dashed; }
+  .legend small { display: block; color: var(--muted); font-size: .72rem; }
+  .legend .bad { color: var(--bad); }
+
+  .status { min-height: 1.4em; margin: 10px 2px 0; font-size: .875rem; color: var(--ink-2); }
+  .status.err { color: var(--bad); }
+
+  .tbl { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--ink-2); font-weight: 600; }
+  td .t { white-space: nowrap; display: inline-block; margin: 0 10px 2px 0; }
+  .src { font-weight: 600; }
+  .src small { display: block; font-weight: 400; color: var(--muted); }
+
+  .note { color: var(--muted); font-size: .78rem; margin: 14px 2px 24px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Marés em Recife</h1>
+  <p class="sub">5 fontes, uma linha por fonte. Altura da maré em metros.</p>
+
+  <button id="go" class="go" type="button">Gerar gráfico</button>
+
+  <div class="nav">
+    <button id="prev" type="button" aria-label="Dia anterior">‹</button>
+    <input id="date" type="date" aria-label="Data">
+    <button id="next" type="button" aria-label="Próximo dia">›</button>
+    <button id="today" class="today-link" type="button">Ir para hoje</button>
+  </div>
+
+  <div id="status" class="status" role="status" aria-live="polite">Toque em “Gerar gráfico”.</div>
+
+  <section id="result" class="card hidden">
+    <div class="seg" role="group" aria-label="Visualização">
+      <button id="vChart" type="button" aria-pressed="true">Gráfico</button>
+      <button id="vTable" type="button" aria-pressed="false">Tabela</button>
+    </div>
+    <div id="chartView">
+      <div class="chart-wrap"><canvas id="chart" role="img" aria-label="Gráfico das marés por fonte"></canvas></div>
+      <ul id="legend" class="legend"></ul>
+    </div>
+    <div id="tableView" class="tbl hidden"></div>
+  </section>
+
+  <p class="note">As curvas são interpoladas entre as preamares e baixa-mares publicadas por cada fonte. Fontes diferentes usam referências de nível (datum) e estações diferentes, então diferenças de alguns decímetros são normais.</p>
+</main>
+
+<script src="vendor/chart.umd.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var COLORS = ['--s1', '--s2', '--s3', '--s4', '--s5'];
+  var chart = null, data = null, hidden = {};
+
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function recifeToday() {
+    var p = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Recife', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+    return p;
+  }
+  function shift(ymd, n) {
+    var a = ymd.split('-').map(Number);
+    var d = new Date(Date.UTC(a[0], a[1] - 1, a[2] + n));
+    return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate());
+  }
+  function prettyDate(ymd) {
+    var a = ymd.split('-').map(Number);
+    return new Date(Date.UTC(a[0], a[1] - 1, a[2])).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', timeZone: 'UTC' });
+  }
+  function setStatus(msg, err) { var s = $('status'); s.textContent = msg; s.className = 'status' + (err ? ' err' : ''); }
+  function fmtM(h) { return h.toFixed(2).replace('.', ',') + ' m'; }
+
+  var dateInput = $('date');
+  dateInput.value = recifeToday();
+
+  function labels(step) {
+    var out = [];
+    for (var m = 0; m <= 1440; m += step) out.push(pad(Math.floor(m / 60)) + ':' + pad(m % 60));
+    return out;
+  }
+
+  // Linha vertical do horário atual (só quando a data é hoje).
+  var nowLine = {
+    id: 'nowLine',
+    afterDatasetsDraw: function (c) {
+      if (!data || data.nowMinutes == null) return;
+      var x = c.scales.x.getPixelForValue(data.nowMinutes / data.step);
+      var a = c.chartArea, g = c.ctx;
+      g.save();
+      g.strokeStyle = css('--ink-2'); g.lineWidth = 1; g.setLineDash([4, 4]);
+      g.beginPath(); g.moveTo(x, a.top); g.lineTo(x, a.bottom); g.stroke();
+      g.setLineDash([]); g.fillStyle = css('--ink-2'); g.font = '11px sans-serif'; g.textAlign = 'center';
+      g.fillText('agora', x, a.top + 10);
+      g.restore();
+    }
+  };
+
+  function render() {
+    var okSources = data.sources.filter(function (s) { return s.ok; });
+    var lbls = labels(data.step);
+    var datasets = data.sources.map(function (s, i) {
+      return {
+        label: s.name + ' (' + s.place + ')',
+        data: s.ok ? s.curve : [],
+        borderColor: css(COLORS[i]),
+        backgroundColor: css(COLORS[i]),
+        borderWidth: 2,
+        borderDash: s.dashed ? [6, 4] : [],
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        pointHoverBorderWidth: 2,
+        pointHoverBorderColor: css('--surface'),
+        tension: 0,
+        hidden: !!hidden[s.id] || !s.ok
+      };
+    });
+
+    if (chart) chart.destroy();
+    var wide = function () { return window.innerWidth >= 640; };
+    chart = new Chart($('chart').getContext('2d'), {
+      type: 'line',
+      data: { labels: lbls, datasets: datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 350 },
+        interaction: { mode: 'index', intersect: false },
+        scales: {
+          x: {
+            grid: { color: function (c) { return c.index % (wide() ? 18 : 36) === 0 ? css('--grid') : 'transparent'; } },
+            ticks: {
+              color: css('--ink-2'), autoSkip: false, maxRotation: 0,
+              callback: function (v, idx) { return idx % (wide() ? 18 : 36) === 0 ? this.getLabelForValue(v) : ''; }
+            }
+          },
+          y: {
+            grid: { color: css('--grid') },
+            ticks: { color: css('--ink-2'), callback: function (v) { return String(v).replace('.', ','); } },
+            title: { display: true, text: 'metros', color: css('--ink-2') }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            itemSort: function (a, b) { return b.parsed.y - a.parsed.y; },
+            callbacks: {
+              title: function (items) { return items[0].label; },
+              label: function (ctx) { return ctx.dataset.label.split(' (')[0] + ': ' + fmtM(ctx.parsed.y); }
+            }
+          }
+        }
+      },
+      plugins: [nowLine]
+    });
+
+    // legenda clicável (tambem mostra falhas)
+    var ul = $('legend'); ul.innerHTML = '';
+    data.sources.forEach(function (s, i) {
+      var li = document.createElement('li');
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.setAttribute('aria-pressed', s.ok && !hidden[s.id] ? 'true' : 'false');
+      b.disabled = !s.ok;
+      var sw = document.createElement('span');
+      sw.className = 'sw' + (s.dashed ? ' dash' : '');
+      sw.style.setProperty('--c', css(COLORS[i]));
+      var t = document.createElement('span');
+      var sub = s.ok ? s.place + (s.approx ? ' · borda estimada' : '') : '<span class="bad">indisponível: ' + String(s.error).replace(/</g, '&lt;') + '</span>';
+      t.innerHTML = '<span></span><small>' + sub + '</small>';
+      t.firstChild.textContent = s.name;
+      b.appendChild(sw); b.appendChild(t); li.appendChild(b); ul.appendChild(li);
+      b.addEventListener('click', function () {
+        hidden[s.id] = !hidden[s.id];
+        chart.setDatasetVisibility(i, !hidden[s.id]);
+        b.setAttribute('aria-pressed', hidden[s.id] ? 'false' : 'true');
+        chart.update();
+      });
+    });
+
+    // tabela
+    var rows = data.sources.map(function (s, i) {
+      var cells = s.ok ? s.extremes.map(function (e) {
+        return '<span class="t">' + e.time + ' ' + (e.type === 'high' ? '▲' : '▼') + ' ' + fmtM(e.h) + '</span>';
+      }).join('') : '<span class="bad" style="color:var(--bad)">indisponível: ' + String(s.error).replace(/</g, '&lt;') + '</span>';
+      return '<tr><td class="src"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + css(COLORS[i]) + ';margin-right:6px"></span>' +
+        s.name + '<small>' + s.place + '</small></td><td>' + cells + '</td></tr>';
+    }).join('');
+    $('tableView').innerHTML = '<table><thead><tr><th>Fonte</th><th>▲ cheia · ▼ baixa</th></tr></thead><tbody>' + rows + '</tbody></table>';
+
+    $('result').classList.remove('hidden');
+  }
+
+  async function generate() {
+    var btn = $('go');
+    var date = dateInput.value || recifeToday();
+    btn.disabled = true; btn.textContent = 'Buscando nas 5 fontes...';
+    setStatus('Consultando as fontes, pode levar alguns segundos.');
+    try {
+      var res = await fetch('/api/tides?fresh=1&date=' + encodeURIComponent(date), { cache: 'no-store' });
+      if (!res.ok) throw new Error('Erro ' + res.status);
+      data = await res.json();
+      var ok = data.sources.filter(function (s) { return s.ok; }).length;
+      if (!ok) {
+        $('result').classList.add('hidden');
+        setStatus('Nenhuma fonte respondeu para ' + prettyDate(data.date) + '. ' + data.sources.map(function (s) { return s.name + ': ' + s.error; }).join(' | '), true);
+      } else {
+        render();
+        var hora = new Date(data.generatedAt).toLocaleTimeString('pt-BR', { timeZone: 'America/Recife', hour: '2-digit', minute: '2-digit' });
+        setStatus(prettyDate(data.date) + ' · ' + ok + ' de ' + data.sources.length + ' fontes · atualizado às ' + hora, ok < data.sources.length);
+      }
+    } catch (e) {
+      setStatus('Não foi possível gerar o gráfico: ' + e.message, true);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Gerar gráfico';
+    }
+  }
+
+  function setView(table) {
+    $('chartView').classList.toggle('hidden', table);
+    $('tableView').classList.toggle('hidden', !table);
+    $('vChart').setAttribute('aria-pressed', String(!table));
+    $('vTable').setAttribute('aria-pressed', String(table));
+    if (!table && chart) chart.resize();
+  }
+
+  $('go').addEventListener('click', generate);
+  $('prev').addEventListener('click', function () { dateInput.value = shift(dateInput.value, -1); generate(); });
+  $('next').addEventListener('click', function () { dateInput.value = shift(dateInput.value, 1); generate(); });
+  $('today').addEventListener('click', function () { dateInput.value = recifeToday(); generate(); });
+  dateInput.addEventListener('change', generate);
+  $('vChart').addEventListener('click', function () { setView(false); });
+  $('vTable').addEventListener('click', function () { setView(true); });
+
+  // refaz o gráfico se o tema claro/escuro mudar
+  if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () { if (data) render(); });
+  }
+})();
+</script>
+</body>
+</html>
