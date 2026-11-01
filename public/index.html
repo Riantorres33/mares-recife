@@ -64,7 +64,7 @@
   .today-link { grid-column: 1 / -1; justify-self: center; background: none; border: 0; color: var(--accent); font: inherit; font-size: .9rem; min-height: 36px; cursor: pointer; }
 
   .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin-top: 12px; }
-  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
   .seg button[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); font-weight: 650; }
 
   .chart-wrap { position: relative; height: min(62vh, 420px); min-height: 300px; }
@@ -94,6 +94,48 @@
   .src { font-weight: 600; }
   .src small { display: block; font-weight: 400; color: var(--muted); }
 
+  /* visão em colunas: uma coluna por hora, tema de maré */
+  .sea {
+    --c1: #6cb8ff; --c2: #ff9d6c; --c3: #45e0a8; --c4: #ffd04a; --c5: #ff93c0;
+    --sea-ink: #e8f6ff; --sea-dim: #8fb4cf; --sea-hi: #7fe0ff; --sea-lo: #ffd08a;
+    --col-w: 58px; --h-head: 30px; --h-tube: 200px; --h-avg: 48px; --h-ext: 44px; --h-row: 26px;
+    border-radius: 12px; overflow: hidden; color: var(--sea-ink);
+    background: linear-gradient(180deg, #0a2540 0%, #08304f 55%, #05233d 100%);
+  }
+  .sea-title { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 14px 0; font-size: .8rem; color: var(--sea-dim); }
+  .sea-title b { color: var(--sea-ink); font-size: .95rem; }
+  .strip { position: relative; display: flex; overflow-x: auto; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; padding: 4px 0 10px; scrollbar-width: thin; scrollbar-color: #2b5d86 transparent; }
+  .rowlab { position: sticky; left: 0; z-index: 2; flex: none; width: 78px; padding-left: 10px; font-size: .7rem; color: var(--sea-dim);
+    background: #082a47; box-shadow: 8px 0 10px -6px rgba(0,0,0,.45); }
+  .rowlab .sp-tube { height: var(--h-tube); display: flex; flex-direction: column; justify-content: space-between; padding: 2px 0; font-variant-numeric: tabular-nums; }
+  .rowlab .sp-avg { height: var(--h-avg); display: flex; align-items: center; }
+  .rowlab .sp-ext { height: var(--h-ext); }
+  .rowlab .sp-head { height: var(--h-head); }
+  .rowlab .lab { height: var(--h-row); display: flex; align-items: center; gap: 4px; color: var(--c); white-space: nowrap; }
+  .rowlab .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--c); flex: none; }
+  .hc { flex: none; width: var(--col-w); text-align: center; scroll-snap-align: center; border-radius: 12px; font-variant-numeric: tabular-nums; }
+  .hc.now { background: rgba(108,184,255,.13); box-shadow: inset 0 0 0 1px rgba(108,184,255,.55); }
+  .hc .hh { height: var(--h-head); line-height: var(--h-head); font-size: .8rem; font-weight: 650; color: var(--sea-dim); }
+  .hc.now .hh { color: var(--sea-hi); }
+  .hc .hh i { font-style: normal; font-size: .55rem; vertical-align: middle; margin-left: 2px; }
+  .tube { position: relative; height: var(--h-tube); margin: 0 8px; border-radius: 12px 12px 6px 6px; overflow: hidden; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); }
+  .water { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #3aa6e0 0%, #0d5a98 55%, #0a3f73 100%); transition: height .6s ease; }
+  .water::before {
+    content: ''; position: absolute; left: 0; right: 0; top: -7px; height: 8px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 8'%3E%3Cpath fill='%233aa6e0' d='M0 8V4Q7 0 14 4T28 4V8Z'/%3E%3C/svg%3E") repeat-x 0 0 / 28px 8px;
+    animation: wave 3.2s linear infinite; animation-delay: var(--d, 0s);
+  }
+  @keyframes wave { to { background-position-x: 28px; } }
+  .hc .avg { height: var(--h-avg); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.15; }
+  .hc .avg b { font-size: 1.05rem; }
+  .hc .avg span { font-size: .66rem; }
+  .hc .up { color: var(--sea-hi); } .hc .down { color: var(--sea-lo); }
+  .hc .ext { height: var(--h-ext); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: .68rem; line-height: 1.2; }
+  .hc .ext b.hi { color: var(--sea-hi); } .hc .ext b.lo { color: var(--sea-lo); }
+  .hc .cell { height: var(--h-row); line-height: var(--h-row); font-size: .78rem; color: var(--c); }
+  .hc .cell:nth-of-type(odd) { background: rgba(255,255,255,.04); }
+  @media (prefers-reduced-motion: reduce) { .water::before { animation: none; } .water { transition: none; } }
+
   .note { color: var(--muted); font-size: .78rem; margin: 14px 2px 24px; }
   .hidden { display: none !important; }
 </style>
@@ -101,7 +143,7 @@
 <body>
 <main>
   <h1>Marés em Recife</h1>
-  <p class="sub">5 fontes, uma linha por fonte. Altura da maré em metros.</p>
+  <p class="sub">5 fontes · altura da maré em metros.</p>
 
   <button id="go" class="go" type="button">Gerar gráfico</button>
 
@@ -116,9 +158,11 @@
 
   <section id="result" class="card hidden">
     <div class="seg" role="group" aria-label="Visualização">
+      <button id="vCols" type="button" aria-pressed="false">Colunas</button>
       <button id="vChart" type="button" aria-pressed="true">Gráfico</button>
       <button id="vTable" type="button" aria-pressed="false">Tabela</button>
     </div>
+    <div id="colsView" class="hidden"></div>
     <div id="chartView">
       <div class="chart-wrap"><canvas id="chart" role="img" aria-label="Gráfico das marés por fonte"></canvas></div>
       <ul id="legend" class="legend"></ul>
@@ -135,6 +179,9 @@
   var $ = function (id) { return document.getElementById(id); };
   var COLORS = ['--s1', '--s2', '--s3', '--s4', '--s5'];
   var chart = null, data = null, hidden = {};
+  // no celular a visão padrão é por colunas; a escolha fica guardada
+  var view = window.innerWidth < 640 ? 'cols' : 'chart';
+  try { var saved = localStorage.getItem('mares-view'); if (saved === 'cols' || saved === 'chart' || saved === 'table') view = saved; } catch (e) { /* sem armazenamento */ }
 
   function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
   function pad(n) { return (n < 10 ? '0' : '') + n; }
@@ -271,7 +318,82 @@
     }).join('');
     $('tableView').innerHTML = '<table><thead><tr><th>Fonte</th><th>▲ cheia · ▼ baixa</th></tr></thead><tbody>' + rows + '</tbody></table>';
 
+    renderCols();
     $('result').classList.remove('hidden');
+    setView(view);
+  }
+
+  var ABBR = { tabuademaresrecife: 'Tábua Rec', tidesatlas: 'Atlas', tideforecast: 'T-Fcast', meteoconsult: 'Météo', tabuademares: 'Tábua BV' };
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  function fmt2(h) { return h.toFixed(2).replace('.', ','); }
+  function hhmm(min) { return pad(Math.floor(min / 60)) + ':' + pad(min % 60); }
+
+  // Uma coluna por hora: água sobe/desce com a média das fontes; abaixo, o valor de cada fonte.
+  function renderCols() {
+    var srcs = [];
+    data.sources.forEach(function (s, i) { if (s.ok) srcs.push({ s: s, c: i + 1 }); });
+    var perHour = 60 / data.step;
+    var lv = function (src, h) { return src.s.curve[Math.round(h * perHour)]; };
+
+    var all = [];
+    srcs.forEach(function (x) { for (var h = 0; h <= 24; h++) all.push(lv(x, h)); });
+    var lo = Math.min(0, Math.floor(Math.min.apply(null, all) * 2) / 2);
+    var hi = Math.ceil(Math.max.apply(null, all) * 2) / 2;
+    if (hi <= lo) hi = lo + 1;
+    var avg = [];
+    for (var h = 0; h <= 24; h++) avg.push(srcs.reduce(function (a, x) { return a + lv(x, h); }, 0) / srcs.length);
+
+    var nowH = data.nowMinutes != null ? Math.floor(data.nowMinutes / 60) : -1;
+
+    var labs = '<div class="rowlab"><div class="sp-head"></div><div class="sp-tube"><span>' + fmt2(hi) + '</span><span>' + fmt2(lo) + '</span></div>' +
+      '<div class="sp-avg">média</div><div class="sp-ext"></div>' +
+      srcs.map(function (x) {
+        return '<div class="lab" style="--c:var(--c' + x.c + ')"><i class="dot"></i>' + esc(ABBR[x.s.id] || x.s.name) + '</div>';
+      }).join('') + '</div>';
+
+    var cols = '';
+    for (var hr = 0; hr < 24; hr++) {
+      var pct = Math.max(2, Math.min(100, (avg[hr] - lo) / (hi - lo) * 100));
+      var diff = avg[hr + 1] - avg[hr];
+      var dir = Math.abs(diff) < 0.005 ? '<span>parada</span>' :
+        diff > 0 ? '<span class="up">↑ subindo</span>' : '<span class="down">↓ descendo</span>';
+
+      var ext = { high: [], low: [] };
+      srcs.forEach(function (x) {
+        x.s.extremes.forEach(function (e) {
+          var m = +e.time.slice(0, 2) * 60 + +e.time.slice(3, 5);
+          if (Math.floor(m / 60) === hr) ext[e.type].push(m);
+        });
+      });
+      var extHtml = ['high', 'low'].map(function (t) {
+        var a = ext[t];
+        if (!a.length) return '';
+        var mean = Math.round(a.reduce(function (p, q) { return p + q; }, 0) / a.length);
+        var spread = Math.max.apply(null, a) - Math.min.apply(null, a);
+        return '<b class="' + (t === 'high' ? 'hi' : 'lo') + '">' + (t === 'high' ? '▲ cheia' : '▼ baixa') + '</b><span>' + (spread > 10 ? '~' : '') + hhmm(mean) + '</span>';
+      }).join('');
+
+      cols += '<div class="hc' + (hr === nowH ? ' now' : '') + '">' +
+        '<div class="hh">' + pad(hr) + 'h' + (hr === nowH ? '<i>●</i>' : '') + '</div>' +
+        '<div class="tube"><div class="water" style="height:' + pct.toFixed(1) + '%;--d:-' + ((hr * 0.37) % 3.2).toFixed(2) + 's"></div></div>' +
+        '<div class="avg"><b>' + fmt2(avg[hr]) + '</b>' + dir + '</div>' +
+        '<div class="ext">' + extHtml + '</div>' +
+        srcs.map(function (x) { return '<div class="cell" style="--c:var(--c' + x.c + ')">' + fmt2(lv(x, hr)) + '</div>'; }).join('') +
+        '</div>';
+    }
+
+    $('colsView').innerHTML = '<div class="sea"><div class="sea-title"><b>Nível da maré por hora</b><span>metros</span></div>' +
+      '<div class="strip">' + labs + cols + '</div></div>';
+  }
+
+  // centraliza a hora atual (ou começa pela madrugada, quando não é hoje)
+  function scrollCols() {
+    var strip = document.querySelector('#colsView .strip');
+    if (!strip) return;
+    var col = strip.querySelector('.hc.now');
+    if (!col) { strip.scrollLeft = 0; return; }
+    var lab = strip.querySelector('.rowlab').offsetWidth;
+    strip.scrollLeft = col.offsetLeft - lab - (strip.clientWidth - lab - col.offsetWidth) / 2;
   }
 
   async function generate() {
@@ -299,12 +421,17 @@
     }
   }
 
-  function setView(table) {
-    $('chartView').classList.toggle('hidden', table);
-    $('tableView').classList.toggle('hidden', !table);
-    $('vChart').setAttribute('aria-pressed', String(!table));
-    $('vTable').setAttribute('aria-pressed', String(table));
-    if (!table && chart) chart.resize();
+  function setView(v) {
+    view = v;
+    try { localStorage.setItem('mares-view', v); } catch (e) { /* sem armazenamento */ }
+    $('colsView').classList.toggle('hidden', v !== 'cols');
+    $('chartView').classList.toggle('hidden', v !== 'chart');
+    $('tableView').classList.toggle('hidden', v !== 'table');
+    $('vCols').setAttribute('aria-pressed', String(v === 'cols'));
+    $('vChart').setAttribute('aria-pressed', String(v === 'chart'));
+    $('vTable').setAttribute('aria-pressed', String(v === 'table'));
+    if (v === 'chart' && chart) chart.resize();
+    if (v === 'cols' && data) scrollCols();
   }
 
   $('go').addEventListener('click', generate);
@@ -312,8 +439,9 @@
   $('next').addEventListener('click', function () { dateInput.value = shift(dateInput.value, 1); generate(); });
   $('today').addEventListener('click', function () { dateInput.value = recifeToday(); generate(); });
   dateInput.addEventListener('change', generate);
-  $('vChart').addEventListener('click', function () { setView(false); });
-  $('vTable').addEventListener('click', function () { setView(true); });
+  $('vCols').addEventListener('click', function () { setView('cols'); });
+  $('vChart').addEventListener('click', function () { setView('chart'); });
+  $('vTable').addEventListener('click', function () { setView('table'); });
 
   // refaz o gráfico se o tema claro/escuro mudar
   if (window.matchMedia) {
