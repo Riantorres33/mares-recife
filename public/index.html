@@ -158,12 +158,12 @@
 
   <section id="result" class="card hidden">
     <div class="seg" role="group" aria-label="Visualização">
-      <button id="vCols" type="button" aria-pressed="false">Colunas</button>
-      <button id="vChart" type="button" aria-pressed="true">Gráfico</button>
+      <button id="vCols" type="button" aria-pressed="true">Colunas</button>
+      <button id="vChart" type="button" aria-pressed="false">Gráfico</button>
       <button id="vTable" type="button" aria-pressed="false">Tabela</button>
     </div>
-    <div id="colsView" class="hidden"></div>
-    <div id="chartView">
+    <div id="colsView"></div>
+    <div id="chartView" class="hidden">
       <div class="chart-wrap"><canvas id="chart" role="img" aria-label="Gráfico das marés por fonte"></canvas></div>
       <ul id="legend" class="legend"></ul>
     </div>
@@ -179,9 +179,8 @@
   var $ = function (id) { return document.getElementById(id); };
   var COLORS = ['--s1', '--s2', '--s3', '--s4', '--s5'];
   var chart = null, data = null, hidden = {};
-  // no celular a visão padrão é por colunas; a escolha fica guardada
-  var view = window.innerWidth < 640 ? 'cols' : 'chart';
-  try { var saved = localStorage.getItem('mares-view'); if (saved === 'cols' || saved === 'chart' || saved === 'table') view = saved; } catch (e) { /* sem armazenamento */ }
+  // ao entrar, a visão principal é sempre por colunas
+  var view = 'cols';
 
   function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
   function pad(n) { return (n < 10 ? '0' : '') + n; }
@@ -423,7 +422,6 @@
 
   function setView(v) {
     view = v;
-    try { localStorage.setItem('mares-view', v); } catch (e) { /* sem armazenamento */ }
     $('colsView').classList.toggle('hidden', v !== 'cols');
     $('chartView').classList.toggle('hidden', v !== 'chart');
     $('tableView').classList.toggle('hidden', v !== 'table');
