@@ -119,7 +119,7 @@
   .hc.now .hh { color: var(--sea-hi); }
   .hc .hh i { font-style: normal; font-size: .55rem; vertical-align: middle; margin-left: 2px; }
   .tube { position: relative; height: var(--h-tube); margin: 0 8px; border-radius: 12px 12px 6px 6px; overflow: hidden; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); }
-  .water { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #3aa6e0 0%, #0d5a98 55%, #0a3f73 100%); transition: height .6s ease; }
+  .water { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #3aa6e0 0%, #0d5a98 55%, #0a3f73 100%); }
   .water::before {
     content: ''; position: absolute; left: 0; right: 0; top: -7px; height: 8px;
     background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 8'%3E%3Cpath fill='%233aa6e0' d='M0 8V4Q7 0 14 4T28 4V8Z'/%3E%3C/svg%3E") repeat-x 0 0 / 28px 8px;
@@ -134,7 +134,7 @@
   .hc .ext b.hi { color: var(--sea-hi); } .hc .ext b.lo { color: var(--sea-lo); }
   .hc .cell { height: var(--h-row); line-height: var(--h-row); font-size: .78rem; color: var(--c); }
   .hc .cell:nth-of-type(odd) { background: rgba(255,255,255,.04); }
-  @media (prefers-reduced-motion: reduce) { .water::before { animation: none; } .water { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .water::before { animation: none; } }
 
   .note { color: var(--muted); font-size: .78rem; margin: 14px 2px 24px; }
   .hidden { display: none !important; }
